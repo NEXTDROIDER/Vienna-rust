@@ -4,5 +4,6 @@
 /objectstore/*/target
 /utils/*/target
 /utils/*/*/target
+/target
 /.idea
 /.vscode

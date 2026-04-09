@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+default-members = ["rust/apiserver"]
+members = [
+    "rust/apiserver",
+    "rust/buildplate-importer",
+    "rust/buildplate-launcher",
+    "rust/cdn",
+    "rust/db",
+    "rust/eventbus-server",
+    "rust/locator",
+    "rust/objectstore-server",
+    "rust/staticdata",
+    "rust/tappables",
+]

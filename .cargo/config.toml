@@ -1,0 +1,9 @@
+[alias]
+apiserver = "run -p vienna-apiserver --bin vienna-apiserver"
+buildplate-importer = "run -p vienna-buildplate-importer --bin vienna-buildplate-importer"
+buildplate-launcher = "run -p vienna-buildplate-launcher --bin vienna-buildplate-launcher"
+cdn = "run -p vienna-cdn --bin vienna-cdn"
+eventbus = "run -p vienna-eventbus-server --bin vienna-eventbus-server"
+locator = "run -p vienna-locator --bin vienna-locator"
+objectstore = "run -p vienna-objectstore --bin vienna-objectstore-server"
+tappables = "run -p vienna-tappables --bin vienna-tappablesgenerator"
