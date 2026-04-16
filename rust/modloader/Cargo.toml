@@ -1,0 +1,9 @@
+[package]
+name = "vienna-modloader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+tracing = "0.1"
+vienna-vma = { path = "../vma" }

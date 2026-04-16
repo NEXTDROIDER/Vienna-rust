@@ -12,3 +12,4 @@ serde_json = "1"
 tokio = { version = "1.37", features = ["macros", "rt-multi-thread", "signal", "net"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+vienna-modloader = { path = "../modloader" }

@@ -5,5 +5,6 @@ buildplate-launcher = "run -p vienna-buildplate-launcher --bin vienna-buildplate
 cdn = "run -p vienna-cdn --bin vienna-cdn"
 eventbus = "run -p vienna-eventbus-server --bin vienna-eventbus-server"
 locator = "run -p vienna-locator --bin vienna-locator"
+mcemod-pack = "run -p vienna-mcemod-packager --bin vienna-mcemod-packager"
 objectstore = "run -p vienna-objectstore --bin vienna-objectstore-server"
 tappables = "run -p vienna-tappables --bin vienna-tappablesgenerator"

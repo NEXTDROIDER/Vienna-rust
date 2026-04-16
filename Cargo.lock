@@ -445,6 +445,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hello-mcemod"
+version = "0.1.0"
+dependencies = [
+ "vienna-vma",
+]
+
+[[package]]
 name = "http"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1206,6 +1213,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "vienna-modloader",
 ]
 
 [[package]]
@@ -1278,6 +1286,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "vienna-mcemod-packager"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+]
+
+[[package]]
+name = "vienna-modloader"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tracing",
+ "vienna-vma",
+]
+
+[[package]]
 name = "vienna-objectstore"
 version = "0.1.0"
 dependencies = [
@@ -1314,6 +1339,10 @@ dependencies = [
  "thiserror 1.0.69",
  "uuid",
 ]
+
+[[package]]
+name = "vienna-vma"
+version = "0.1.0"
 
 [[package]]
 name = "wasi"

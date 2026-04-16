@@ -8,8 +8,12 @@ members = [
     "rust/cdn",
     "rust/db",
     "rust/eventbus-server",
+    "rust/example-hello-mcemod",
     "rust/locator",
+    "rust/mcemod-packager",
+    "rust/modloader",
     "rust/objectstore-server",
     "rust/staticdata",
     "rust/tappables",
+    "rust/vma",
 ]
