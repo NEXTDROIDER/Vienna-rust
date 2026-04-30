@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "vienna-apiserver"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 default-run = "vienna-apiserver"
 
@@ -13,3 +13,4 @@ tokio = { version = "1.37", features = ["macros", "rt-multi-thread", "signal", "
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 vienna-modloader = { path = "../modloader" }
+

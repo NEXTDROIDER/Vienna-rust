@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "vienna-objectstore"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 
 [[bin]]
@@ -18,3 +18,4 @@ uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
 tempfile = "3"
+

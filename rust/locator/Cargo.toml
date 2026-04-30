@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "vienna-locator"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 default-run = "vienna-locator"
 
@@ -12,4 +12,5 @@ serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.37", features = ["macros", "net", "rt-multi-thread", "signal"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
 

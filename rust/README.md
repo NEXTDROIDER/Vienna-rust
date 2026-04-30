@@ -1,5 +1,7 @@
 # Vienna Rust migration
 
+Current version: 0.0.3
+
 This workspace is the Rust rewrite entry point for the original Vienna Java services.
 
 Currently migrated:

@@ -9,6 +9,7 @@ function Ensure-Directory {
 }
 
 $workspaceRoot = Split-Path -Parent $PSCommandPath
+$versionFile = Join-Path $workspaceRoot "VERSION"
 $targetDir = Join-Path $workspaceRoot "target\debug"
 $bundleRoot = Join-Path $workspaceRoot "server-portable"
 $binDir = Join-Path $bundleRoot "bin"
@@ -39,6 +40,10 @@ Ensure-Directory $objectstoreDataDir
 Ensure-Directory $modsDir
 Ensure-Directory $logsDir
 Ensure-Directory $vmaSdkDir
+
+if (Test-Path -LiteralPath $versionFile) {
+    Copy-Item -LiteralPath $versionFile -Destination (Join-Path $bundleRoot "VERSION") -Force
+}
 
 Get-ChildItem -LiteralPath $targetDir -Filter "vienna-*.exe" -File | ForEach-Object {
     try {
@@ -91,6 +96,7 @@ if (Test-Path -LiteralPath $exampleModSourceDir) {
 $vmaReadmePath = Join-Path $vmaSdkDir "README.txt"
 @"
 Vienna Modding API SDK
+Version: 0.0.3
 
 Contents:
 - vma\                Rust crate with the Vienna Modding API
@@ -107,11 +113,19 @@ Typical flow:
 
 $runTemplate = Join-Path $workspaceRoot "server-portable\run.ps1"
 $stopTemplate = Join-Path $workspaceRoot "server-portable\stop.ps1"
+$updateTemplate = Join-Path $workspaceRoot "server-portable\update.ps1"
+$updateBatTemplate = Join-Path $workspaceRoot "server-portable\update.bat"
 if (-not (Test-Path -LiteralPath $runTemplate)) {
     throw "Missing portable run script: $runTemplate"
 }
 if (-not (Test-Path -LiteralPath $stopTemplate)) {
     throw "Missing portable stop script: $stopTemplate"
+}
+if (-not (Test-Path -LiteralPath $updateTemplate)) {
+    throw "Missing portable update script: $updateTemplate"
+}
+if (-not (Test-Path -LiteralPath $updateBatTemplate)) {
+    throw "Missing portable update launcher: $updateBatTemplate"
 }
 
 Write-Host "Portable server bundle is ready at: $bundleRoot"

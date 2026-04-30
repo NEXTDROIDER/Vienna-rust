@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "vienna-db"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 
 [dependencies]
@@ -11,3 +11,4 @@ thiserror = "1"
 
 [dev-dependencies]
 tempfile = "3"
+

@@ -1,16 +1,19 @@
 Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms
 
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="Vienna Portable Server" Height="430" Width="560"
+        Title="Vienna Portable Server" Height="430" Width="760"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <StackPanel Margin="10">
             <TextBlock Text="Vienna Portable Server" FontSize="18" Margin="0,0,0,10"/>
             <WrapPanel Margin="0,0,0,10">
-                <Button Name="StartBtn" Content="Start Servers" Width="160" Height="40" Margin="0,5,10,5"/>
-                <Button Name="StopBtn" Content="Stop Servers" Width="160" Height="40" Margin="0,5,10,5"/>
-                <Button Name="OpenLogsBtn" Content="Open Logs" Width="160" Height="40" Margin="0,5,0,5"/>
+                <Button Name="StartBtn" Content="Start Servers" Width="140" Height="40" Margin="0,5,10,5"/>
+                <Button Name="StopBtn" Content="Stop Servers" Width="140" Height="40" Margin="0,5,10,5"/>
+                <Button Name="OpenLogsBtn" Content="Open Logs" Width="120" Height="40" Margin="0,5,10,5"/>
+                <Button Name="ClearLogsBtn" Content="Clear Logs" Width="120" Height="40" Margin="0,5,10,5"/>
+                <Button Name="UpdateBtn" Content="Update Server" Width="140" Height="40" Margin="0,5,0,5"/>
             </WrapPanel>
             <TextBlock Name="StatusText" Text="Idle" Margin="0,0,0,8"/>
             <TextBox Name="LogBox" Height="300" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
@@ -25,6 +28,8 @@ $window = [Windows.Markup.XamlReader]::Load($reader)
 $StartBtn = $window.FindName("StartBtn")
 $StopBtn = $window.FindName("StopBtn")
 $OpenLogsBtn = $window.FindName("OpenLogsBtn")
+$ClearLogsBtn = $window.FindName("ClearLogsBtn")
+$UpdateBtn = $window.FindName("UpdateBtn")
 $StatusText = $window.FindName("StatusText")
 $LogBox = $window.FindName("LogBox")
 
@@ -37,6 +42,7 @@ $script:ModsDir = Join-Path $script:BundleRoot "mods"
 $script:LogsDir = Join-Path $script:BundleRoot "logs"
 $script:StatePath = Join-Path $script:BundleRoot "run-state.json"
 $script:ResourcePackFile = Join-Path $script:BundleRoot "data/pack1.zip"
+$script:VersionFile = Join-Path $script:BundleRoot "VERSION"
 $script:ApiPort = 8080
 $script:CdnPort = 8081
 $script:LocatorPort = 8082
@@ -56,6 +62,14 @@ function Set-Status {
 
     $StatusText.Text = $Message
     Write-Log $Message
+}
+
+function Get-ServerVersion {
+    if (Test-Path -LiteralPath $script:VersionFile) {
+        return (Get-Content -LiteralPath $script:VersionFile -Raw).Trim()
+    }
+
+    return "dev"
 }
 
 function Ensure-Directory {
@@ -251,6 +265,94 @@ function Stop-Vienna {
     }
 }
 
+function Has-RunningViennaProcesses {
+    foreach ($entry in @($script:Processes)) {
+        try {
+            if ($entry.Process -and -not $entry.Process.HasExited) {
+                return $true
+            }
+        }
+        catch {
+        }
+    }
+
+    return $false
+}
+
+function Clear-Logs {
+    Ensure-Directory $script:LogsDir
+
+    if (Has-RunningViennaProcesses) {
+        [System.Windows.MessageBox]::Show(
+            "Stop the servers before clearing logs.",
+            "Vienna Logs",
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Warning
+        ) | Out-Null
+        return
+    }
+
+    $result = [System.Windows.MessageBox]::Show(
+        "Delete all log files from the logs folder?",
+        "Clear Vienna Logs",
+        [System.Windows.MessageBoxButton]::YesNo,
+        [System.Windows.MessageBoxImage]::Question
+    )
+
+    if ($result -ne [System.Windows.MessageBoxResult]::Yes) {
+        Write-Log "Clear logs cancelled"
+        return
+    }
+
+    Get-ChildItem -LiteralPath $script:LogsDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
+    }
+
+    Set-Status "Logs cleared"
+}
+
+function Start-UpdateFlow {
+    if (Has-RunningViennaProcesses) {
+        [System.Windows.MessageBox]::Show(
+            "Stop the servers before updating.",
+            "Vienna Update",
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Warning
+        ) | Out-Null
+        return
+    }
+
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = "Select the new server-portable folder to update from"
+
+    if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
+        Write-Log "Update cancelled"
+        return
+    }
+
+    $updateScript = Join-Path $script:BundleRoot "update.ps1"
+    if (-not (Test-Path -LiteralPath $updateScript)) {
+        Set-Status "Update failed"
+        Write-Log "Missing update script: $updateScript"
+        return
+    }
+
+    Set-Status "Updating server files"
+    $process = Start-Process -FilePath "powershell.exe" -ArgumentList @(
+        "-ExecutionPolicy", "Bypass",
+        "-File", $updateScript,
+        "-Source", $dialog.SelectedPath
+    ) -WorkingDirectory $script:BundleRoot -PassThru -Wait
+
+    if ($process.ExitCode -eq 0) {
+        Set-Status "Update finished"
+    }
+    else {
+        Set-Status "Update failed"
+        Write-Log "Updater exited with code $($process.ExitCode)"
+    }
+}
+
 function Stop-ExistingViennaProcesses {
     if (-not (Test-Path -LiteralPath $script:StatePath)) {
         return
@@ -341,9 +443,17 @@ $OpenLogsBtn.Add_Click({
     Start-Process explorer.exe $script:LogsDir | Out-Null
 })
 
+$ClearLogsBtn.Add_Click({
+    Clear-Logs
+})
+
+$UpdateBtn.Add_Click({
+    Start-UpdateFlow
+})
+
 $window.Add_Closing({
     Stop-Vienna
 })
 
-Set-Status "Ready"
+Set-Status ("Ready - version {0}" -f (Get-ServerVersion))
 [void]$window.ShowDialog()
