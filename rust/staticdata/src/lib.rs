@@ -87,6 +87,10 @@ impl Catalog {
     pub fn get_item(&self, item_id: &str) -> Option<&CatalogItem> {
         self.items_by_id.get(item_id)
     }
+
+    pub fn items(&self) -> impl Iterator<Item = &CatalogItem> {
+        self.items_by_id.values()
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -136,6 +140,12 @@ impl Levels {
         }
 
         Ok(Self { levels })
+    }
+
+    pub fn rewards_for_level(&self, level: u32) -> Option<&Level> {
+        level
+            .checked_sub(2)
+            .and_then(|index| self.levels.get(index as usize))
     }
 }
 
@@ -272,4 +282,3 @@ mod tests {
         assert!(data.catalog.get_item("stone").is_some());
     }
 }
-

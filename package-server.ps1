@@ -96,7 +96,7 @@ if (Test-Path -LiteralPath $exampleModSourceDir) {
 $vmaReadmePath = Join-Path $vmaSdkDir "README.txt"
 @"
 Vienna Modding API SDK
-Version: 0.0.3
+Version: 0.0.4
 
 Contents:
 - vma\                Rust crate with the Vienna Modding API

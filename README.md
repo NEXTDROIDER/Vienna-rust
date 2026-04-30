@@ -1,5 +1,5 @@
 # Vienna-rust
-Version: 0.0.3
+Version: 0.0.4
 
 Vienna – your all-in-one tool. Simple to build and run on any system.
 

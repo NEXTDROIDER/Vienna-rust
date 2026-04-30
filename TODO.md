@@ -4,6 +4,16 @@
 
 - Make updates preserve user data, mods, logs, and local databases.
 - Move logs next to the launcher/run scripts and expose log controls in the launcher.
+- Shop catalog API backed by loaded static data.
+- Player items API backed by earth.db.
+- Encounter/tappable generation API scaffold backed by active tiles.
+- Maximum tile cache setting is exposed in portable settings and API server config.
+- Support importing Vienna data with warn-and-merge behavior.
+- Custom-login-only server option and auth config endpoint.
+- Log listing, reading, clearing, and optional log-secret auth.
+- Show/store roles through a player roles API.
+- Level reward lookup API for reward buildplates/items.
+- Windows portable launcher settings panel for slower/config-heavy flows.
 
 ## In progress
 
@@ -11,35 +21,28 @@
 
 - Launcher buildplate preview: store preview in the launcher's DB instead of earthdb/object store.
 - Launcher buildplate preview: add liquid rendering.
-- Shop management.
-- Player items management.
-- Encounter generation and AR.
-- Use tiles when spawning tappables: avoid water/forbidden areas and tune biome-based spawns.
-- Allow setting maximum cache size for tiles.
-- Add level reward buildplates and wire them into level ups.
+- Full AR encounter flow beyond server-side encounter generation.
+- Use real map/biome tile data when spawning tappables: avoid water/forbidden areas and tune biome-based spawns.
+- Wire level reward buildplates into real level-up mutation flow.
 - NFC mini figures.
 - Find tokens for first time tutorial, daily login, and related flows.
 
 ## Tools and imports
 
 - Custom Java resource pack conversion tool for Earth/Bedrock resource packs.
-- Support importing Vienna data with warn-and-merge behavior when data already exists.
 - Export buildplates in both formats.
 - Launch/connect to remote components, for example running buildplate launcher on another PC.
 - View the player buildplate template if it exists.
 
 ## Auth, profiles, and permissions
 
-- Option to only allow custom login because Microsoft accounts cannot be verified here.
-- Add auth for logs, possibly via random secret passed through CLI args and verified by the controller.
 - Clear logs should remain a separate permission.
-- Show roles on profile page.
 - Associate a player profile with a user and allow permissions scoped to that associated player.
 
 ## UX and diagnostics
 
-- View old logs in launcher.
-- Investigate Windows slowness and add spinners for slower flows.
+- View old logs in launcher UI, not only through API/explorer.
+- Investigate Windows slowness deeper and add more spinners/progress states.
 
 ## Refactoring
 

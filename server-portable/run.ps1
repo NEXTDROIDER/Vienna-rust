@@ -3,7 +3,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="Vienna Portable Server" Height="430" Width="760"
+        Title="Vienna Portable Server" Height="500" Width="800"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <StackPanel Margin="10">
@@ -15,8 +15,14 @@ Add-Type -AssemblyName System.Windows.Forms
                 <Button Name="ClearLogsBtn" Content="Clear Logs" Width="120" Height="40" Margin="0,5,10,5"/>
                 <Button Name="UpdateBtn" Content="Update Server" Width="140" Height="40" Margin="0,5,0,5"/>
             </WrapPanel>
+            <WrapPanel Margin="0,0,0,10">
+                <CheckBox Name="CustomLoginOnlyBox" Content="Custom login only" Width="150" Margin="0,5,10,5"/>
+                <TextBlock Text="Tile cache" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Name="TileCacheBox" Text="2048" Width="80" Height="24" Margin="0,5,10,5"/>
+                <Button Name="SaveSettingsBtn" Content="Save Settings" Width="120" Height="32" Margin="0,0,10,0"/>
+            </WrapPanel>
             <TextBlock Name="StatusText" Text="Idle" Margin="0,0,0,8"/>
-            <TextBox Name="LogBox" Height="300" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+            <TextBox Name="LogBox" Height="320" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
         </StackPanel>
     </Grid>
 </Window>
@@ -30,6 +36,9 @@ $StopBtn = $window.FindName("StopBtn")
 $OpenLogsBtn = $window.FindName("OpenLogsBtn")
 $ClearLogsBtn = $window.FindName("ClearLogsBtn")
 $UpdateBtn = $window.FindName("UpdateBtn")
+$CustomLoginOnlyBox = $window.FindName("CustomLoginOnlyBox")
+$TileCacheBox = $window.FindName("TileCacheBox")
+$SaveSettingsBtn = $window.FindName("SaveSettingsBtn")
 $StatusText = $window.FindName("StatusText")
 $LogBox = $window.FindName("LogBox")
 
@@ -41,6 +50,7 @@ $script:ObjectstoreDataDir = Join-Path $script:DataDir "data"
 $script:ModsDir = Join-Path $script:BundleRoot "mods"
 $script:LogsDir = Join-Path $script:BundleRoot "logs"
 $script:StatePath = Join-Path $script:BundleRoot "run-state.json"
+$script:RunConfigPath = Join-Path $script:BundleRoot "run-config.json"
 $script:ResourcePackFile = Join-Path $script:BundleRoot "data/pack1.zip"
 $script:VersionFile = Join-Path $script:BundleRoot "VERSION"
 $script:ApiPort = 8080
@@ -70,6 +80,66 @@ function Get-ServerVersion {
     }
 
     return "dev"
+}
+
+function New-LogSecret {
+    $bytes = New-Object byte[] 24
+    [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    return [Convert]::ToBase64String($bytes)
+}
+
+function Get-RunConfig {
+    $default = [pscustomobject]@{
+        CustomLoginOnly = $false
+        MaxTileCacheSize = 2048
+        LogSecret = (New-LogSecret)
+    }
+
+    if (-not (Test-Path -LiteralPath $script:RunConfigPath)) {
+        $default | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:RunConfigPath -Encoding UTF8
+        return $default
+    }
+
+    try {
+        $config = Get-Content -LiteralPath $script:RunConfigPath -Raw | ConvertFrom-Json
+        if ($null -eq $config.LogSecret -or [string]::IsNullOrWhiteSpace([string]$config.LogSecret)) {
+            $config | Add-Member -NotePropertyName LogSecret -NotePropertyValue (New-LogSecret) -Force
+        }
+        if ($null -eq $config.MaxTileCacheSize -or [int]$config.MaxTileCacheSize -lt 1) {
+            $config | Add-Member -NotePropertyName MaxTileCacheSize -NotePropertyValue 2048 -Force
+        }
+        if ($null -eq $config.CustomLoginOnly) {
+            $config | Add-Member -NotePropertyName CustomLoginOnly -NotePropertyValue $false -Force
+        }
+        return $config
+    }
+    catch {
+        Write-Log "Could not read run-config.json, using defaults: $($_.Exception.Message)"
+        return $default
+    }
+}
+
+function Save-RunConfig {
+    $maxTileCacheSize = 2048
+    if (-not [int]::TryParse($TileCacheBox.Text, [ref]$maxTileCacheSize) -or $maxTileCacheSize -lt 1) {
+        throw "Tile cache must be a positive number"
+    }
+
+    $existing = Get-RunConfig
+    $config = [pscustomobject]@{
+        CustomLoginOnly = [bool]$CustomLoginOnlyBox.IsChecked
+        MaxTileCacheSize = $maxTileCacheSize
+        LogSecret = [string]$existing.LogSecret
+    }
+
+    $config | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:RunConfigPath -Encoding UTF8
+    return $config
+}
+
+function Load-SettingsIntoUi {
+    $config = Get-RunConfig
+    $CustomLoginOnlyBox.IsChecked = [bool]$config.CustomLoginOnly
+    $TileCacheBox.Text = [string]$config.MaxTileCacheSize
 }
 
 function Ensure-Directory {
@@ -377,6 +447,7 @@ function Stop-ExistingViennaProcesses {
 
 function Start-Vienna {
     Test-RequiredFiles
+    $config = Save-RunConfig
     Ensure-Directory $script:DataDir
     Ensure-Directory $script:ObjectstoreDataDir
     Ensure-Directory $script:ModsDir
@@ -399,14 +470,21 @@ function Start-Vienna {
     )
     Wait-ForPort -HostName "127.0.0.1" -Port $script:CdnPort -ProcessEntry $cdn
 
-    $apiserver = Start-ViennaProcess -Name "API Server" -FilePath (Join-Path $script:BinDir "vienna-apiserver.exe") -Arguments @(
+    $apiserverArgs = @(
         "--db", (Join-Path $script:BundleRoot "earth.db"),
         "--static-data", $script:DataDir,
         "--eventbus", ("localhost:{0}" -f $script:EventbusPort),
         "--objectstore", ("localhost:{0}" -f $script:ObjectstorePort),
         "--mods-dir", $script:ModsDir,
+        "--logs-dir", $script:LogsDir,
+        "--log-secret", [string]$config.LogSecret,
+        "--max-tile-cache-size", [string]$config.MaxTileCacheSize,
         "--port", [string]$script:ApiPort
     )
+    if ([bool]$config.CustomLoginOnly) {
+        $apiserverArgs += "--custom-login-only"
+    }
+    $apiserver = Start-ViennaProcess -Name "API Server" -FilePath (Join-Path $script:BinDir "vienna-apiserver.exe") -Arguments $apiserverArgs
     Wait-ForPort -HostName "127.0.0.1" -Port $script:ApiPort -ProcessEntry $apiserver
 
     $locator = Start-ViennaProcess -Name "Locator" -FilePath (Join-Path $script:BinDir "vienna-locator.exe") -Arguments @(
@@ -447,6 +525,17 @@ $ClearLogsBtn.Add_Click({
     Clear-Logs
 })
 
+$SaveSettingsBtn.Add_Click({
+    try {
+        Save-RunConfig | Out-Null
+        Set-Status "Settings saved"
+    }
+    catch {
+        Set-Status "Settings failed"
+        Write-Log $_.Exception.Message
+    }
+})
+
 $UpdateBtn.Add_Click({
     Start-UpdateFlow
 })
@@ -456,4 +545,5 @@ $window.Add_Closing({
 })
 
 Set-Status ("Ready - version {0}" -f (Get-ServerVersion))
+Load-SettingsIntoUi
 [void]$window.ShowDialog()
