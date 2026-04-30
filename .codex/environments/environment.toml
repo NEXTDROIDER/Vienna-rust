@@ -17,4 +17,7 @@ platform = "win32"
 [[actions]]
 name = "Clean"
 icon = "tool"
-command = "cargo clean"
+command = '''
+cargo clean
+del server-portable
+'''

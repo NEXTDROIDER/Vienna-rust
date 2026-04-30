@@ -1,4 +1,8 @@
- $ErrorActionPreference = "Stop"
+param(
+    [switch]$Clean
+)
+
+$ErrorActionPreference = "Stop"
 
 function Ensure-Directory {
     param([Parameter(Mandatory)][string]$Path)
@@ -12,6 +16,7 @@ $workspaceRoot = Split-Path -Parent $PSCommandPath
 $versionFile = Join-Path $workspaceRoot "VERSION"
 $targetDir = Join-Path $workspaceRoot "target\debug"
 $bundleRoot = Join-Path $workspaceRoot "server-portable"
+$templateDir = Join-Path $workspaceRoot "portable-template"
 $binDir = Join-Path $bundleRoot "bin"
 $dataDir = Join-Path $bundleRoot "data"
 $objectstoreDataDir = Join-Path $dataDir "data"
@@ -33,6 +38,14 @@ foreach ($path in $requiredFiles) {
     }
 }
 
+if (-not (Test-Path -LiteralPath $templateDir)) {
+    throw "Portable template folder not found: $templateDir"
+}
+
+if ($Clean -and (Test-Path -LiteralPath $bundleRoot)) {
+    Remove-Item -LiteralPath $bundleRoot -Recurse -Force
+}
+
 Ensure-Directory $bundleRoot
 Ensure-Directory $binDir
 Ensure-Directory $dataDir
@@ -40,6 +53,10 @@ Ensure-Directory $objectstoreDataDir
 Ensure-Directory $modsDir
 Ensure-Directory $logsDir
 Ensure-Directory $vmaSdkDir
+
+Get-ChildItem -LiteralPath $templateDir -File | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $bundleRoot $_.Name) -Force
+}
 
 if (Test-Path -LiteralPath $versionFile) {
     Copy-Item -LiteralPath $versionFile -Destination (Join-Path $bundleRoot "VERSION") -Force
@@ -110,22 +127,5 @@ Typical flow:
 5. Put the .mcemod file into the server's mods folder.
 "@ | Set-Content -LiteralPath $vmaReadmePath -Encoding Ascii
 
-
-$runTemplate = Join-Path $workspaceRoot "server-portable\run.ps1"
-$stopTemplate = Join-Path $workspaceRoot "server-portable\stop.ps1"
-$updateTemplate = Join-Path $workspaceRoot "server-portable\update.ps1"
-$updateBatTemplate = Join-Path $workspaceRoot "server-portable\update.bat"
-if (-not (Test-Path -LiteralPath $runTemplate)) {
-    throw "Missing portable run script: $runTemplate"
-}
-if (-not (Test-Path -LiteralPath $stopTemplate)) {
-    throw "Missing portable stop script: $stopTemplate"
-}
-if (-not (Test-Path -LiteralPath $updateTemplate)) {
-    throw "Missing portable update script: $updateTemplate"
-}
-if (-not (Test-Path -LiteralPath $updateBatTemplate)) {
-    throw "Missing portable update launcher: $updateBatTemplate"
-}
 
 Write-Host "Portable server bundle is ready at: $bundleRoot"

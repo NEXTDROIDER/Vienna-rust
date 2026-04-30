@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vienna PRO Panel</title>
+<style>
+body{background:#0d1117;color:white;font-family:Arial}
+.card{background:#161b22;padding:10px;margin:10px;border-radius:8px}
+button{padding:10px;margin:5px}
+</style>
+</head>
+<body>
+
+<h2>Vienna PRO Panel</h2>
+
+<div id="login">
+<input id="u" placeholder="user">
+<input id="p" type="password" placeholder="pass">
+<button onclick="login()">Login</button>
+</div>
+
+<button onclick="start()">Start</button>
+<button onclick="stop()">Stop</button>
+<button onclick="refresh()">Refresh</button>
+
+<div id="out"></div>
+
+<script>
+let token="";
+
+async function login(){
+ let res = await fetch("http://localhost:5050/api/login",{
+  method:"POST",
+  body:JSON.stringify({user:u.value,pass:p.value})
+ });
+ let data = await res.json();
+ token = data.token;
+ alert("logged in");
+}
+
+async function api(path){
+ return fetch("http://localhost:5050"+path,{
+  headers:{Authorization:"Bearer "+token}
+ }).then(r=>r.text());
+}
+
+async function start(){ await api("/api/start"); refresh(); }
+async function stop(){ await api("/api/stop"); refresh(); }
+
+async function refresh(){
+ let data = await api("/api/services");
+ document.getElementById("out").innerText=data;
+}
+</script>
+
+</body>
+</html>
