@@ -7,7 +7,7 @@ echo === Vienna Portable Builder ===
 
 set "BUILD_PS=%~dp0build-portable.ps1"
 set "ICON=%~dp0icon.ico"
-set "SRC=server-portable\run.ps1"
+set "SRC=assets\run.ps1"
 set "OUT=server-portable\ViennaLauncher.exe"
 
 REM 1. Запуск build-portable.ps1
