@@ -1,0 +1,9 @@
+[package]
+name = "vienna-vma"
+version = "0.0.4"
+edition = "2021"
+
+[lib]
+name = "vienna_vma"
+path = "src/lib.rs"
+
