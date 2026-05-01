@@ -16,7 +16,6 @@ $workspaceRoot = Split-Path -Parent $PSCommandPath
 $versionFile = Join-Path $workspaceRoot "VERSION"
 $targetDir = Join-Path $workspaceRoot "target\debug"
 $bundleRoot = Join-Path $workspaceRoot "server-portable"
-$templateDir = Join-Path $workspaceRoot "portable-template"
 $binDir = Join-Path $bundleRoot "bin"
 $dataDir = Join-Path $bundleRoot "data"
 $objectstoreDataDir = Join-Path $dataDir "data"
@@ -38,9 +37,6 @@ foreach ($path in $requiredFiles) {
     }
 }
 
-if (-not (Test-Path -LiteralPath $templateDir)) {
-    throw "Portable template folder not found: $templateDir"
-}
 
 if ($Clean -and (Test-Path -LiteralPath $bundleRoot)) {
     Remove-Item -LiteralPath $bundleRoot -Recurse -Force
@@ -54,9 +50,6 @@ Ensure-Directory $modsDir
 Ensure-Directory $logsDir
 Ensure-Directory $vmaSdkDir
 
-Get-ChildItem -LiteralPath $templateDir -File | ForEach-Object {
-    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $bundleRoot $_.Name) -Force
-}
 
 if (Test-Path -LiteralPath $versionFile) {
     Copy-Item -LiteralPath $versionFile -Destination (Join-Path $bundleRoot "VERSION") -Force
